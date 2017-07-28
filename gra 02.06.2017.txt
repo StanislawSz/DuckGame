@@ -1,0 +1,383 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue May 30 09:45:51 2017
+
+@author: Stas
+"""
+
+import pygame
+from random import randint
+import time
+
+
+# zmienne globalne
+
+#Grafika
+okno_otwarte = True
+CELOWNIK_PLIK = 'celownik.png'
+CELOWNIK2_PLIK = 'celownik3.png'
+KARABIN_PLIK = 'karabin1.png'
+KARABIN2_PLIK = 'karabin2.png'
+BACKGROUND = pygame.image.load('background.png')
+KACZKA_PLIK = 'kaczka.png'
+AMMO_PLIK = 'ammo.png'
+INFINITY_PLIK = 'infinity1.png'
+PREZENT_PLIK = 'gift.png'
+KRUK_PLIK = 'kruk.png'
+
+#Dzwieki
+AWP_DZWIEK = 'awp.wav'
+SHOOTGUN_DZWIEK = 'shootgun.wav'
+KACZKA_DZWIEK = 'quack.wav'
+KRUK_DZWIEK = 'kruk.wav'
+
+okno_otwarte = True
+
+# sta³e
+ROZMIAR = SZEROKOSC, WYSOKOSC = (1024, 768)
+BIA£Y = pygame.color.THECOLORS['white']
+CZARNY = pygame.color.THECOLORS['black']
+#CIEMNOCZERWONY = pygame.color.THECOLORS['darkred']
+CIEMNOZIELONY = pygame.color.THECOLORS['darkgreen']
+#JASNONIEBISKI = pygame.color.THECOLORS['lightblue']
+
+pygame.init()
+
+#Konfiguracja dzwiekow
+awp = pygame.mixer.Sound(AWP_DZWIEK)
+awp.set_volume(0.7)
+shootgun = pygame.mixer.Sound(SHOOTGUN_DZWIEK)
+shootgun.set_volume(0.7)
+kaczka_sound = pygame.mixer.Sound(KACZKA_DZWIEK)
+kruk_sound = pygame.mixer.Sound(KRUK_DZWIEK)
+
+ekran = pygame.display.set_mode(ROZMIAR)    
+pygame.display.set_caption('Projekt Stanislaw Szwagrzyk')
+pygame.mouse.set_visible(False)
+zegar = pygame.time.Clock()
+
+class Karabin:
+    def __init__(self, CELOWNIK_PLIK, KARABIN_PLIK, AMMO_PLIK):
+        self.celownikIMG = pygame.image.load(CELOWNIK_PLIK)
+        self.celownikIMG = pygame.transform.scale(self.celownikIMG, (50, 50))
+        self.karabinIMG = pygame.image.load(KARABIN_PLIK)
+        self.karabinIMG = pygame.transform.scale(self.karabinIMG, (self.karabinIMG.get_rect().width//3,
+                                            self.karabinIMG.get_rect().height//3))
+        self.ammoIMG = pygame.image.load(AMMO_PLIK)
+        self.ammoIMG = pygame.transform.scale(self.ammoIMG, (self.ammoIMG.get_rect().width//15,
+                                            self.ammoIMG.get_rect().height//15))
+        self.rect = self.celownikIMG.get_rect()
+        self.sizex = self.celownikIMG.get_width()//2
+        self.sizey = self.celownikIMG.get_height()//2
+        
+    def strzal(self, grupa_pociskow, x, y):
+        if len(grupa_pociskow) < 3:
+            pocisk = Pocisk()
+            pocisk.rect.centerx = x
+            pocisk.rect.centery = y
+            grupa_pociskow.add(pocisk)
+            awp.play()
+            
+        
+    def draw(self, surface, x, y):
+        surface.blit(self.celownikIMG, (x-self.sizex, y-self.sizey))
+        surface.blit(self.karabinIMG, [10, WYSOKOSC-120])
+
+class Karabin2(Karabin):
+    def __init__(self, CELOWNIK_PLIK, KARABIN_PLIK, AMMO_PLIK):
+        super().__init__(CELOWNIK_PLIK, KARABIN_PLIK, AMMO_PLIK)
+        self.ammo = 5
+
+    def strzal(self, grupa_pociskow, x, y):
+        if len(grupa_pociskow) < 1 and self.ammo > 0:
+            pocisk = Pocisk2()
+            pocisk.rect.centerx = x
+            pocisk.rect.centery = y
+            grupa_pociskow.add(pocisk)
+            self.ammo -= 1
+            shootgun.play()
+        
+        
+class Kaczka(pygame.sprite.Sprite):
+    def __init__(self, KACZKA_PLIK, speed = 1):
+        super().__init__()
+        self.image = pygame.image.load(KACZKA_PLIK)
+        self.image = pygame.transform.scale(self.image, (50, 50))
+        self.rect = self.image.get_rect()
+        self.speed = speed
+        self.trafiony = False
+        
+    def sprawdz_krawedzie_boczne(self):
+        if self.rect.right > SZEROKOSC+30 or self.rect.bottom > WYSOKOSC:
+            return True
+        else:
+            return False
+
+    def dzwiek(self):
+        kaczka_sound.play()
+        
+    def update(self):
+        if self.trafiony == False:
+            self.rect.x += self.speed
+        else:
+            self.rect.x += self.speed
+            self.rect.y += 2
+
+class Kruk(Kaczka):
+    def __init__(self, KRUK_PLIK, speed=1):
+        super().__init__(KRUK_PLIK, speed)
+        self.dzwiek()
+
+    def dzwiek(self):
+        kruk_sound.play()
+        
+            
+class Pocisk(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface([2, 2])
+        self.rect = self.image.get_rect()
+        self.czas_pocisku = 0
+
+
+    def draw(self,surface):
+        surface.blit(self.image, self.rect)
+
+    def update(self):
+#        self.rect.y -= self.ruch_y
+        self.czas_pocisku += 1
+        if self.czas_pocisku > 4:
+            self.kill()
+            
+class Pocisk2(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface([70, 70])
+        self.rect = self.image.get_rect()
+        self.czas_pocisku = 0
+
+
+    def draw(self,surface):
+        surface.blit(self.image, self.rect)
+
+    def update(self):
+#        self.rect.y -= self.ruch_y
+        self.czas_pocisku += 1
+        if self.czas_pocisku > 30:
+            self.kill()
+
+class Prezent(pygame.sprite.Sprite):
+    def __init__(self, PREZENT_PLIK, speed = 1):
+        super().__init__()
+        self.image = pygame.image.load(PREZENT_PLIK)
+        self.image = pygame.transform.scale(self.image, (self.image.get_rect().width//2,
+                                            self.image.get_rect().height//2))
+        self.rect = self.image.get_rect()
+        self.speed = speed
+        self.bonus = self.losuj_bonus()
+
+    def losuj_bonus(self):
+        szansa = randint(1, 30)
+        if szansa < 20:
+            return 5
+        elif 20 <= szansa < 26:
+            return 7
+        elif 26 <= szansa < 29:
+            return 9
+        else:
+            return 11 
+        
+    def sprawdz_krawedzie_boczne(self):
+        if self.rect.bottom > WYSOKOSC:
+            return True
+        else:
+            return False
+        
+    def update(self):
+        self.rect.y += self.speed
+          
+class Tekst:
+    def __init__(self, tekst, kolor_tekstu, polozenie, rozmiar = 42):
+        self.tekst = tekst
+        self.kolor_tekstu = kolor_tekstu
+        self.polozenie = polozenie
+        self.font = pygame.font.SysFont(None, rozmiar)
+        self.ustaw(polozenie)
+
+
+    def ustaw(self, polozenie):
+        self.image = self.font.render(str(self.tekst), 1, self.kolor_tekstu)
+        self.rect = self.image.get_rect()
+        self.rect.center = polozenie
+
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
+
+    def update(self, tekst):
+        self.tekst = tekst
+        self.ustaw(self.polozenie)
+            
+
+def stworz_kaczke(predkosc = 1):
+    kaczka = Kaczka(KACZKA_PLIK, predkosc)
+    kaczka.rect.x = -20
+    kaczka.rect.y = randint(kaczka.rect.height + 2, WYSOKOSC-250)
+    
+    return kaczka
+
+def stworz_kruka(predkosc = 1):
+    kruk = Kruk(KRUK_PLIK, predkosc)
+    kruk.rect.x = -20
+    kruk.rect.y = randint(kruk.rect.height + 2, WYSOKOSC-250)
+    
+    return kruk
+
+
+def stworz_prezent(predkosc=1):
+    prezent = Prezent(PREZENT_PLIK)
+    prezent.rect.x = randint(prezent.rect.width + 2, SZEROKOSC - prezent.rect.width -2)
+    prezent.rect.y = 0 - prezent.rect.height -2
+    
+    return prezent
+
+def czas_start():
+    czas = pygame.USEREVENT+1
+    pygame.time.set_timer(czas, 1000)
+    
+    return czas
+
+def czas_stop():
+    pygame.time.set_timer(pygame.USEREVENT+1, 0)
+
+
+karabin = Karabin(CELOWNIK_PLIK, KARABIN_PLIK, INFINITY_PLIK)
+karabin2 = Karabin2(CELOWNIK2_PLIK, KARABIN2_PLIK, AMMO_PLIK)
+grupa_kaczek = pygame.sprite.Group()
+grupa_kaczek.add(stworz_kaczke(randint(3,7)))
+grupa_pociskow = pygame.sprite.Group()
+grupa_prezentow = pygame.sprite.Group()
+bron = 0
+oczekuje_prezent = randint(10, 30)
+oczekuje_kruk = randint(10, 30)
+##oczekuje_kruk = 5
+##oczekuje_prezent = 5
+##print(oczekuje_prezent)
+
+time_left = 59
+
+text_punkty = Tekst(0, CIEMNOZIELONY, [SZEROKOSC// 2, 20])
+text_czas = Tekst("00:{}".format(time_left), CZARNY, [SZEROKOSC - 50, 20])
+
+time1 = pygame.time.get_ticks()
+time2 = 0
+licznik = 0
+czas = czas_start()
+
+while okno_otwarte:
+    pos = pygame.mouse.get_pos()
+     
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            okno_otwarte = False
+        else:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if bron == 0:
+                    karabin.strzal(grupa_pociskow, pos[0], pos[1])
+                elif bron == 1:
+                    karabin2.strzal(grupa_pociskow, pos[0], pos[1])
+                
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    bron = 0
+                if event.key == pygame.K_2:
+                    bron = 1
+    
+    ekran.fill(BIA£Y)
+    ekran.blit(BACKGROUND, [0,0])
+    grupa_kaczek.update()
+    grupa_kaczek.draw(ekran)
+    grupa_pociskow.update()
+    grupa_prezentow.update()
+    grupa_prezentow.draw(ekran)
+
+    
+    if time_left > 0:
+        if pygame.event.get(czas):
+            time_left -= 1
+            if time_left > 9:
+                text_czas.update("00:{}".format(time_left))
+            else:
+                text_czas.update("00:0{}".format(time_left))
+    else:
+        czas_stop()
+
+    if bron == 0:
+        karabin.draw(ekran, pos[0], pos[1])
+        ekran.blit(karabin.ammoIMG, [10+karabin.karabinIMG.get_rect().width+30, WYSOKOSC-50])
+        
+    elif bron == 1:
+        karabin2.draw(ekran, pos[0], pos[1])
+        for i in range(karabin2.ammo):
+            ekran.blit(karabin2.ammoIMG, [10+karabin2.karabinIMG.get_rect().width + 20 + karabin2.ammoIMG.get_rect().width * i, WYSOKOSC-50])
+
+    time2 = pygame.time.get_ticks()
+    time = (time2-time1)//1000
+##    print((time+1) % (oczekuje_prezent+1))
+    
+    if (time+1) % (oczekuje_prezent+1) == 0:
+        if len(grupa_prezentow) == 0:
+            grupa_prezentow.add(stworz_prezent(5))
+
+    if (time+1) % (oczekuje_kruk+1) == 0:
+        if licznik == 0:
+            grupa_kaczek.add(stworz_kruka(randint(9,13)))
+            oczekuje_kruk = randint(10, 30)
+            licznik += 1
+
+    for obj in grupa_prezentow:
+        if obj.sprawdz_krawedzie_boczne():
+            obj.kill()
+            oczekuje_prezent = randint(10, 30)
+
+    for p in grupa_pociskow:
+        for obj in grupa_kaczek:
+            if not obj.trafiony:
+                if pygame.sprite.collide_rect(obj, p):
+                    obj.trafiony = True
+                    if type(obj) == Kruk:
+                        text_punkty.tekst += 10
+                        licznik = 0
+                    elif obj.speed > 9:
+##                        print(obj.speed)
+                        text_punkty.tekst += 2
+                        obj.dzwiek()
+                    else:
+                        text_punkty.tekst += 1
+                        obj.dzwiek()
+                        
+                    text_punkty.ustaw([SZEROKOSC// 2, 20])
+
+        grupa = pygame.sprite.spritecollide(p,grupa_prezentow, True)
+        for y in grupa:
+            karabin2.ammo += y.bonus
+            oczekuje_prezent = randint(10, 30)
+##            print('nowy')
+            
+    for obj in grupa_kaczek:
+        if obj.sprawdz_krawedzie_boczne():
+            if type(obj) == Kruk:
+                licznik = 0
+            obj.kill()
+            i = randint(1,2)
+            if len(grupa_kaczek) < 4:
+                for x in range(i):
+                    grupa_kaczek.add(stworz_kaczke(randint(3,10)))
+            
+    
+    text_punkty.draw(ekran)
+    text_czas.draw(ekran)
+    
+    pygame.display.flip()
+    zegar.tick(60)
+    
+pygame.quit()

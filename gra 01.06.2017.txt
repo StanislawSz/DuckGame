@@ -1,0 +1,238 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue May 30 09:45:51 2017
+
+@author: Stas
+"""
+##01.06.2017 https://pastebin.com/8jNdY3N4
+
+import pygame
+from random import randint
+import time
+
+
+# zmienne globalne
+okno_otwarte = True
+celownik_plik = 'celownik.png'
+celownik2_plik = 'celownik2.png'
+karabin1_plik = pygame.image.load('karabin1.png')
+karabin2_plik = pygame.image.load('karabin2.png')
+karabin1 = pygame.transform.scale(karabin1_plik, (karabin1_plik.get_rect().width//3,
+                                            karabin1_plik.get_rect().height//3))
+karabin2 = pygame.transform.scale(karabin2_plik, (karabin2_plik.get_rect().width//3,
+                                            karabin2_plik.get_rect().height//3))
+background = pygame.image.load('background.png')
+kaczka_plik = 'kaczka.png'
+ammo_plik = pygame.image.load('ammo.png')
+ammo = pygame.transform.scale(ammo_plik, (ammo_plik.get_rect().width//15,
+                                            ammo_plik.get_rect().height//15))
+okno_otwarte = True
+
+# sta³e
+ROZMIAR = SZEROKOSC, WYSOKOSC = (1024, 768)
+BIA£Y = pygame.color.THECOLORS['white']
+#CZARNY = pygame.color.THECOLORS['black']
+#CIEMNOCZERWONY = pygame.color.THECOLORS['darkred']
+CIEMNOZIELONY = pygame.color.THECOLORS['darkgreen']
+#JASNONIEBISKI = pygame.color.THECOLORS['lightblue']
+
+pygame.init()
+
+ekran = pygame.display.set_mode(ROZMIAR)    
+pygame.display.set_caption('Projekt Stanislaw Szwagrzyk')
+pygame.mouse.set_visible(False)
+zegar = pygame.time.Clock()
+
+class Celownik:
+    def __init__(self, celownik_plik):
+#        super.__init__()
+        self.image = pygame.image.load(celownik_plik)
+        self.image = pygame.transform.scale(self.image, (50, 50))
+        self.rect = self.image.get_rect()
+        self.sizex = self.image.get_width()//2
+        self.sizey = self.image.get_height()//2
+        
+    def strzal1(self, grupa_pociskow, x, y):
+        if len(grupa_pociskow) < 3:
+            pocisk = Pocisk()
+            pocisk.rect.centerx = x
+            pocisk.rect.centery = y
+            grupa_pociskow.add(pocisk)
+            
+    def strzal2(self, grupa_pociskow, x, y):
+        if len(grupa_pociskow) < 1:
+            pocisk = Pocisk2()
+            pocisk.rect.centerx = x
+            pocisk.rect.centery = y
+            grupa_pociskow.add(pocisk)
+
+    def zmien_celownik(self, celownik):
+        self.image = pygame.image.load(celownik)
+        self.image = pygame.transform.scale(self.image, (50, 50))   
+        
+    def draw(self, surface, x, y):
+        surface.blit(self.image, (x-self.sizex, y-self.sizey))
+        
+class Kaczka(pygame.sprite.Sprite):
+    def __init__(self, kaczka_plik, speed = 1):
+        super().__init__()
+        self.image = pygame.image.load(kaczka_plik)
+        self.image = pygame.transform.scale(self.image, (50, 50))
+        self.rect = self.image.get_rect()
+        self.speed = speed
+        self.trafiony = False
+        
+    def sprawdz_krawedzie_boczne(self):
+        if self.rect.right > SZEROKOSC+30 or self.rect.bottom > WYSOKOSC:
+            return True
+        else:
+            return False
+        
+    def update(self):
+        if self.trafiony == False:
+            self.rect.x += self.speed
+        else:
+            self.rect.x += self.speed
+            self.rect.y += 2
+            
+
+class Pocisk(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface([2, 2])
+        self.rect = self.image.get_rect()
+        self.czas_pocisku = 0
+
+
+    def draw(self,surface):
+        surface.blit(self.image, self.rect)
+
+    def update(self):
+#        self.rect.y -= self.ruch_y
+        self.czas_pocisku += 1
+        if self.czas_pocisku > 4:
+            self.kill()
+            
+class Pocisk2(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface([80, 80])
+        self.rect = self.image.get_rect()
+        self.czas_pocisku = 0
+
+
+    def draw(self,surface):
+        surface.blit(self.image, self.rect)
+
+    def update(self):
+#        self.rect.y -= self.ruch_y
+        self.czas_pocisku += 1
+        if self.czas_pocisku > 30:
+            self.kill()
+
+          
+class Tekst:
+    def __init__(self, tekst, kolor_tekstu, polozenie, rozmiar = 42):
+        self.tekst = tekst
+        self.kolor_tekstu = kolor_tekstu
+        self.polozenie = polozenie
+        self.font = pygame.font.SysFont(None, rozmiar)
+        self.ustaw( polozenie)
+
+
+    def ustaw(self, polozenie):
+        self.image = self.font.render(str(self.tekst), 1, self.kolor_tekstu)
+        self.rect = self.image.get_rect()
+        self.rect.center = polozenie
+
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
+            
+
+def stworz_kaczke(predkosc = 1):
+    kaczka = Kaczka(kaczka_plik, predkosc)
+    kaczka.rect.x = -20
+    kaczka.rect.y = randint(kaczka.rect.height + 2, WYSOKOSC-150)
+    
+    return kaczka
+       
+
+celownik = Celownik(celownik_plik)
+grupa_kaczek = pygame.sprite.Group()
+grupa_kaczek.add(stworz_kaczke(randint(3,7)))
+grupa_pociskow = pygame.sprite.Group()
+#print(len(grupa_kaczek))
+bron = 0
+
+obiekt_punkty = Tekst(0, CIEMNOZIELONY, [SZEROKOSC// 2, 20])
+
+##start_ticks = pygame.time.get_ticks()
+
+while okno_otwarte:
+    pos = pygame.mouse.get_pos()
+    
+    
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            okno_otwarte = False
+        else:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if bron == 0:
+                    celownik.strzal1(grupa_pociskow, pos[0], pos[1])
+                elif bron == 1:
+                    celownik.strzal2(grupa_pociskow, pos[0], pos[1])
+                
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    bron = 0
+                    celownik.zmien_celownik(celownik_plik)
+                if event.key == pygame.K_2:
+                    bron = 1
+                    celownik.zmien_celownik(celownik2_plik)
+    
+    ekran.fill(BIA£Y)
+    ekran.blit(background, [0,0])
+    celownik.draw(ekran, pos[0], pos[1])
+    grupa_kaczek.update()
+    grupa_kaczek.draw(ekran)
+    grupa_pociskow.update()
+##    grupa_pociskow.draw(ekran)
+##    seconds=(pygame.time.get_ticks()-start_ticks)/1000
+##    print(seconds)
+
+    for p in grupa_pociskow:
+        for obj in grupa_kaczek:
+            if not obj.trafiony:
+                if pygame.sprite.collide_rect(obj, p):
+                    obj.trafiony = True
+                    if obj.speed > 6:
+                        obiekt_punkty.tekst += 2
+                    else:
+                        obiekt_punkty.tekst += 1
+                    obiekt_punkty.ustaw([SZEROKOSC// 2, 20])
+
+    for obj in grupa_kaczek:
+        if obj.sprawdz_krawedzie_boczne():
+            obj.kill()
+            i = randint(1,2)
+            if len(grupa_kaczek) < 4:
+                for x in range(i):
+                    grupa_kaczek.add(stworz_kaczke(randint(3,10)))
+
+#            print(len(grupa_kaczek))
+#            break
+            
+    
+    obiekt_punkty.draw(ekran)
+
+    if bron == 0:
+        ekran.blit(karabin1, [10, WYSOKOSC-120])
+    elif bron == 1:
+        ekran.blit(karabin2, [10, WYSOKOSC-120])
+
+    ekran.blit(ammo, [10+karabin1.get_rect().width+30, WYSOKOSC-50])
+    
+    pygame.display.flip()
+    zegar.tick(60)
+    
+pygame.quit()
