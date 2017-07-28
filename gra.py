@@ -12,29 +12,29 @@ from random import randint
 # zmienne globalne
 
 #Grafika
-CELOWNIK_PLIK = 'celownik.png'
-CELOWNIK2_PLIK = 'celownik3.png'
-KARABIN_PLIK = 'karabin1.png'
-KARABIN2_PLIK = 'karabin2.png'
-KACZKA_PLIK = 'kaczka.png'
-KACZKA2_PLIK = 'kaczka2.png'
-AMMO_PLIK = 'ammo.png'
-INFINITY_PLIK = 'infinity1.png'
-PREZENT_PLIK = 'gift.png'
-KRUK_PLIK = 'kruk.png'
-KRUK2_PLIK = 'kruk2.png'
-KONIEC_PLIK = 'game_over.png'
-LVL_UP_PLIK = 'lvl_up.png'
-BACKGROUND = pygame.image.load('background.png')
-LOGO = pygame.image.load('logo1.png')
+CELOWNIK_PLIK = 'grafika/celownik.png'
+CELOWNIK2_PLIK = 'grafika/celownik3.png'
+KARABIN_PLIK = 'grafika/karabin1.png'
+KARABIN2_PLIK = 'grafika/karabin2.png'
+KACZKA_PLIK = 'grafika/kaczka.png'
+KACZKA2_PLIK = 'grafika/kaczka2.png'
+AMMO_PLIK = 'grafika/ammo.png'
+INFINITY_PLIK = 'grafika/infinity1.png'
+PREZENT_PLIK = 'grafika/gift.png'
+KRUK_PLIK = 'grafika/kruk.png'
+KRUK2_PLIK = 'grafika/kruk2.png'
+KONIEC_PLIK = 'grafika/game_over.png'
+LVL_UP_PLIK = 'grafika/lvl_up.png'
+BACKGROUND = pygame.image.load('grafika/background.png')
+LOGO = pygame.image.load('grafika/logo1.png')
 LOGO = pygame.transform.scale(LOGO, (LOGO.get_rect().width,
                                             LOGO.get_rect().height))
 
 #Dzwieki
-AWP_DZWIEK = 'awp.wav'
-SHOOTGUN_DZWIEK = 'shootgun.wav'
-KACZKA_DZWIEK = 'quack.wav'
-KRUK_DZWIEK = 'kruk.wav'
+AWP_DZWIEK = 'dzwiek/awp.wav'
+SHOOTGUN_DZWIEK = 'dzwiek/shootgun.wav'
+KACZKA_DZWIEK = 'dzwiek/quack.wav'
+KRUK_DZWIEK = 'dzwiek/kruk.wav'
 
 # stałe
 ROZMIAR = SZEROKOSC, WYSOKOSC = (1024, 768)
